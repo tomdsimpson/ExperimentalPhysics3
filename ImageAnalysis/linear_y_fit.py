@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize, differential_evolution
 
-# --- File Management --- #
+# --- Load Data --- #
 SCRIPT_DIR = Path(__file__).parent.resolve()
 
 def read_data(dimension="y", n=1):
@@ -20,19 +20,13 @@ def read_data(dimension="y", n=1):
 
 # --- Linear Drag Model --- #
 def linear_y_model(g, v_i, n, t, y_i=0):
-    """
-    Linear drag fall model (downward positive):
-        v(t) = (v_i - g*n) * exp(-t/n) + g*n
-        y(t) = (n*v_i - g*n**2) * (1 - exp(-t/n)) + g*n*t + y_i
-    """
+
     return (n * v_i - g * n**2) * (1 - np.exp(-t / n)) + g * n * t + y_i
 
 
 # --- Loss Function --- #
 def rmse_loss_ly_joint(params, times, true_y):
-    """
-    Joint RMSE loss for [g, v_i, n]
-    """
+
     g, v_i, n = params
     pred_y = linear_y_model(g, v_i, n, times)
     return np.mean((true_y - pred_y) ** 2)
@@ -40,9 +34,7 @@ def rmse_loss_ly_joint(params, times, true_y):
 
 # --- Fitting Routine --- #
 def fit_linear_y(times, y_positions, bounds):
-    """
-    Two-stage optimization: differential evolution + local polish
-    """
+
     # Global search
     result_global = differential_evolution(
         lambda p: rmse_loss_ly_joint(p, times, y_positions),
@@ -61,7 +53,7 @@ def fit_linear_y(times, y_positions, bounds):
     return result_local.x, result_local.fun
 
 
-# --- Analysis Across Trials --- #
+# --- Finding g --- #
 def determine_g_joint_linear(y_bounds):
     gs, ns, vis = [], [], []
 
@@ -77,7 +69,7 @@ def determine_g_joint_linear(y_bounds):
 
         print(f"Trial {i+1} | g={opt_g:.4f}, v_i={opt_v_i:.4f}, n={opt_n:.4f}, loss={loss:.4e}")
 
-        # Create side-by-side plots
+        
         y_pred = linear_y_model(opt_g, opt_v_i, opt_n, times)
         fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
@@ -99,7 +91,7 @@ def determine_g_joint_linear(y_bounds):
         plt.tight_layout()
         plt.show()
 
-    # Stats
+    # Finding mean and error
     opt_g_mean = np.mean(gs)
     opt_g_std = np.std(gs)
     opt_g_stderr = opt_g_std / np.sqrt(len(gs))
@@ -112,11 +104,10 @@ def determine_g_joint_linear(y_bounds):
 
 # --- Main --- #
 def main():
-    # Reasonable physical bounds
     y_bounds = [
-        (5, 15),      # g (m/s²)
-        (0, 5),       # v_i (m/s)
-        (0.001, 10),  # n (s)
+        (5, 15),      # g
+        (0, 5),       # v_i 
+        (0.001, 10),  # n 
     ]
 
     determine_g_joint_linear(y_bounds)

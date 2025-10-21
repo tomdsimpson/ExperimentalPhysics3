@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize, differential_evolution
 
 
-# --- File Management --- #
+# --- Read Data --- #
 SCRIPT_DIR = Path(__file__).parent.resolve()
 
 def read_data(dimension="y", n=1):
@@ -51,7 +51,7 @@ def rmse_loss_qy_joint(params, times, true_y):
     return np.mean((true_y - pred_y) ** 2)
 
 
-# --- Fitting Routine --- #
+# --- Fitting the Function --- #
 def fit_quadratic_y(times, y_positions, bounds):
     """
     Two-stage optimization: differential evolution + local polish
@@ -74,7 +74,7 @@ def fit_quadratic_y(times, y_positions, bounds):
     return result_local.x, result_local.fun
 
 
-# --- Analysis Across Trials --- #
+# --- Finding g --- #
 def determine_g_joint(y_bounds):
     gs, ns, vis = [], [], []
 
@@ -92,7 +92,6 @@ def determine_g_joint(y_bounds):
 
         y_pred = quadratic_y_model(opt_g, opt_v_i, opt_n, times)
 
-        # Create side-by-side plots
         fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
         # Fit plot
@@ -114,7 +113,7 @@ def determine_g_joint(y_bounds):
         plt.tight_layout()
         plt.show()
 
-    # Stats
+    # Finding mean and standard error
     opt_g_mean = np.mean(gs)
     opt_g_std = np.std(gs)
     opt_g_stderr = opt_g_std / np.sqrt(len(gs))
@@ -127,11 +126,10 @@ def determine_g_joint(y_bounds):
 
 # --- Main --- #
 def main():
-    # Wider bounds to allow real physical variation
     y_bounds = [
-        (5, 15),      # g (m/s²)
-        (0, 5),       # v_i (m/s)
-        (0.01, 10),  # n (m/kg or equivalent)
+        (5, 15),      # g 
+        (0, 5),       # v_i 
+        (0.01, 10),  # n 
     ]
 
     determine_g_joint(y_bounds)

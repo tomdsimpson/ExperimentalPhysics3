@@ -116,6 +116,7 @@ def determine_g(x_bounds, y_bounds, x0, y0, mode="linear"):
     print(f"Optimal g: {opt_g:.5} \u00B1 {stder_g:.2}")
     print("---")
 
+
 def main():
 
     x_bounds = [(0, 1), (0, 2)]   
