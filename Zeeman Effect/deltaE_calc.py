@@ -204,6 +204,7 @@ print(avg)
 print("Error")
 print(error)
 
+# Show plot with sigma legends
 row2[0].legend()
 row2[1].legend()
 plt.show()
