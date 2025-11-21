@@ -169,7 +169,7 @@ for i, filename in enumerate(files):
 
     # Export Table image
     df_styled = df.style.format({"\u0394E error": "{:.3}"}).hide(axis="index")
-    dfi.export(df_styled, f"{table_name}.png")
+    dfi.export(df_styled, f"IMG/{table_name}.png")
     
     # Fit Data
     m, b, me, be = data_fit(b_field, delta_E, E_errors)
