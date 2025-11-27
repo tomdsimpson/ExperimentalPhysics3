@@ -83,7 +83,7 @@ def calculate_delta_energy(centre_pos, x1, x2, f, table_out=False):
 # --- Monte Carlo Error Estimate
 def find_error(centre_pos, uncertainty, x1, x2):
 
-    es = np.array([uncertainty]*len(x1))
+    es = np.array([0.5]*len(x1))
     n = 10000 # Sample size
     x1s = RNG.normal(x1[:,np.newaxis], es[:,np.newaxis], size=(len(x1), n))
     x2s = RNG.normal(x2[:,np.newaxis], es[:,np.newaxis], size=(len(x2), n))
@@ -111,7 +111,7 @@ def data_fit(x, y, y_err):
 
 # ---- Main Code and Plotting --- #
 
-fig, (row1, row2, row3) = plt.subplots(3,2,sharey="row",sharex=True,gridspec_kw={"height_ratios": [1, 2, 1]})
+fig, (row1, row2, row3) = plt.subplots(3,2,sharex=True,gridspec_kw={"height_ratios": [1, 2, 1]})
 fig.set_figwidth(15)
 fig.set_figheight(8)
 fig.set_tight_layout(True)
@@ -120,22 +120,28 @@ axes = [row2[0], row2[0], row2[1], row2[1]]
 res_axes = [row1[0],row3[0],row1[1],row3[1]]
 
 # --- Labels and Lims
-row2[0].set_ylabel("\u0394E (eV)")
+row2[0].set_ylabel("\u0394E (\u03BCeV)")
 row3[0].set_xlabel("Magnetic Field (T)")
 row3[1].set_xlabel("Magnetic Field (T)")
-row1[0].set_title("Transverse")
-row1[1].set_title("Longitudinal")
-row1[0].set_ylabel("Residual Value (eV)")
-row3[0].set_ylabel("Residual Value (eV)")
-row1[0].set_ylim(-4.25e-6,4.25e-6)
-row3[0].set_ylim(-4.25e-6,4.25e-6)
+row1[0].set_title("Transverse Configuration")
+row1[1].set_title("Longitudinal Configuration")
+row1[0].set_ylabel("Residual Value (\u03BCeV)")
+row3[0].set_ylabel("Residual Value (\u03BCeV)")
+row1[0].set_ylim(-4.25,4.25)
+row3[0].set_ylim(-4.25,4.25)
+
+row1[1].set_ylabel("Residual Value (\u03BCeV)")
+row2[1].set_ylabel("\u0394E (\u03BCeV)")
+row3[1].set_ylabel("Residual Value (\u03BCeV)")
+row1[1].set_ylim(-4.25,4.25)
+row3[1].set_ylim(-4.25,4.25)
 
 # Loop Setup
 files = [
-    "./CSV_Data/transverse_plus.csv",
-    "./CSV_Data/transverse_minus.csv",
-    "./CSV_Data/longitudinal_plus.csv",
-    "./CSV_Data/longitudinal_minus.csv"
+    "./CSV_Data/Python_Data/transverse_plus.csv",
+    "./CSV_Data/Python_Data/transverse_minus.csv",
+    "./CSV_Data/Python_Data/longitudinal_plus.csv",
+    "./CSV_Data/Python_Data/longitudinal_minus.csv"
 ]
 colors = [
     "red",
@@ -167,9 +173,7 @@ for i, filename in enumerate(files):
     E_errors = find_error(centre_pos, uncertainty, x1, x2)
     df["\u0394E error"] = E_errors
 
-    # Export Table image
-    df_styled = df.style.format({"\u0394E error": "{:.3}"}).hide(axis="index")
-    dfi.export(df_styled, f"IMG/{table_name}.png")
+
     
     # Fit Data
     m, b, me, be = data_fit(b_field, delta_E, E_errors)
@@ -179,32 +183,39 @@ for i, filename in enumerate(files):
     residuals = y_pred-delta_E
     residual_error = np.sqrt((b_field*me)**2+E_errors**2 + be**2)
 
+    df["Pred y (eV)"] = y_pred
+    df["Residual (eV)"] = residuals
+    df["Res Error (eV)"] = residual_error
+
+    # Export Table image
+    df_styled = df.style.format({"\u0394E error": "{:.3}", "Residual (eV)":"{:.3}", "Res Error (eV)":"{:.3}"}).hide(axis="index")
+    dfi.export(df_styled, f"IMG/Tables/{table_name}.png")
+
+
     # Plot residuals
-    res_axes[i].plot(b_field, residuals, ".", color=colors[i])
     res_axes[i].axhline(0,color="black",linestyle="--", linewidth="0.5")
-    res_axes[i].errorbar(b_field, residuals, residual_error, fmt="None", capsize=3, ecolor="black", elinewidth=1)
-
+    res_axes[i].errorbar(b_field, residuals*1e6, residual_error*1e6, fmt="None", capsize=3, ecolor="black", elinewidth=0.75)
+    res_axes[i].plot(b_field, residuals*1e6, ".", color=colors[i])
     # Plot data
-    axes[i].plot(b_field, y_pred, linewidth=0.5, linestyle="--", color=colors[i])
-    axes[i].plot(b_field, delta_E, ".", color=colors[i], label=labels[i])
-    axes[i].errorbar(b_field, delta_E, E_errors, fmt="None", capsize=3, ecolor="black", elinewidth=1)
-
+    axes[i].plot(b_field, y_pred*1e6, linewidth=0.5, linestyle="--", color=colors[i])
+    axes[i].errorbar(b_field, delta_E*1e6, E_errors*1e6, fmt="None", capsize=3, ecolor="black", elinewidth=0.75)
+    axes[i].plot(b_field, delta_E*1e6, ".", color=colors[i], label=labels[i])
+    axes[i].axhline(0,color="black",linestyle="--", linewidth="0.5")
     # Save Bohr magneton value and error
     mu_bs[i] = np.abs(m)
     mu_es[i] = np.abs(me)
 
+    print(np.abs(m))
+    print(np.abs(me))
 
 
 # Weighted Average
 avg = np.sum(mu_bs / mu_es**2) / np.sum(1/mu_es**2)
 error = np.sqrt(1 / np.sum(1/mu_es**2))
 
-print("Bohr Magneton")
 print(avg)
-print("Error")
 print(error)
 
-# Show plot with sigma legends
 row2[0].legend()
 row2[1].legend()
 plt.show()
