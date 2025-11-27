@@ -205,16 +205,14 @@ for i, filename in enumerate(files):
     mu_bs[i] = np.abs(m)
     mu_es[i] = np.abs(me)
 
-    print(np.abs(m))
-    print(np.abs(me))
 
 
 # Weighted Average
 avg = np.sum(mu_bs / mu_es**2) / np.sum(1/mu_es**2)
 error = np.sqrt(1 / np.sum(1/mu_es**2))
 
-print(avg)
-print(error)
+print(f"Bohr Magneton: {avg}")
+print(f"Error: {error}")
 
 row2[0].legend()
 row2[1].legend()
