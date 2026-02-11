@@ -7,3 +7,6 @@ Repository containing data and code used during practical work.
 
 ##### The Zeeman Effect
 - 30th October - 27th November
+
+##### Young's Double Slit
+- 15th January - 12th February
